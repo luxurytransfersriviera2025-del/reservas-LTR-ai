@@ -1,0 +1,23 @@
+{
+  "name": "reservas-ltr-ai",
+  "version": "1.0.0",
+  "description": "Chatbot de IA inteligente para reservar traslados a Riviera Maya",
+  "main": "index.html",
+  "scripts": {
+    "dev": "wrangler pages dev",
+    "deploy": "wrangler pages deploy"
+  },
+  "keywords": [
+    "chatbot",
+    "reservas",
+    "traslados",
+    "riviera-maya",
+    "claude-ai",
+    "cloudflare"
+  ],
+  "author": "Luxury Transfers Riviera",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
