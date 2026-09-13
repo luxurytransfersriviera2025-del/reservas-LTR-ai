@@ -1,7 +1,334 @@
-const HTML = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Reservas Luxury</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}.container{width:100%;max-width:800px;background:white;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3);display:flex;flex-direction:column;height:90vh;max-height:800px}.header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:30px 20px;text-align:center}.header h1{font-size:28px;margin-bottom:5px}.chat-messages{flex:1;overflow-y:auto;padding:20px;background:#f9f9f9}.message{margin-bottom:15px}.message.bot{text-align:left}.message.user{text-align:right}.message-content{display:inline-block;padding:12px 18px;border-radius:15px;max-width:70%;word-wrap:break-word}.message.bot .message-content{background:#e8e8e8;color:#333}.message.user .message-content{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white}.input-area{border-top:1px solid #ddd;padding:15px;background:white;display:flex;gap:10px}.input-field{flex:1;border:1px solid #ddd;border-radius:25px;padding:12px 18px;font-size:14px;outline:none}.input-field:focus{border-color:#667eea}.btn-send{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border:none;border-radius:50%;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px}</style></head><body><div class="container"><div class="header"><h1>🚗 Reservas Luxury</h1><p>Traslados a Riviera Maya</p></div><div class="chat-messages" id="chatMessages"></div><div class="input-area"><input type="text" class="input-field" id="inputField" placeholder="Escribe tu pregunta..." onkeypress="handleKeyPress(event)"><button class="btn-send" onclick="sendMessage()">➤</button></div></div><script>function addMessage(text,isBot=true){const div=document.createElement('div');div.className='message '+(isBot?'bot':'user');const content=document.createElement('div');content.className='message-content';content.textContent=text;div.appendChild(content);document.getElementById('chatMessages').appendChild(div);document.getElementById('chatMessages').scrollTop=document.getElementById('chatMessages').scrollHeight}function sendMessage(){const input=document.getElementById('inputField');const text=input.value.trim();if(!text)return;addMessage(text,false);input.value='';addMessage('Conectando con Claude AI...',true)}function handleKeyPress(event){if(event.key==='Enter')sendMessage()}window.addEventListener('load',()=>{addMessage('¡Hola! 👋 Bienvenido a Reservas Luxury. ¿A cuál parte de la Riviera Maya quieres ir hoy?',true)})</script></body></html>`;
+import chatHandler from '../functions/chat.js';
+import reservaHandler from '../functions/reserva.js';
+
+const HTML = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reservas Luxury - Traslados Riviera Maya</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 90vh;
+      max-height: 800px;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 5px;
+    }
+
+    .header p {
+      opacity: 0.9;
+      font-size: 14px;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+
+    .message {
+      margin-bottom: 15px;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.bot {
+      text-align: left;
+    }
+
+    .message.user {
+      text-align: right;
+    }
+
+    .message-content {
+      display: inline-block;
+      padding: 12px 18px;
+      border-radius: 15px;
+      max-width: 70%;
+      word-wrap: break-word;
+      line-height: 1.4;
+    }
+
+    .message.bot .message-content {
+      background: #e8e8e8;
+      color: #333;
+    }
+
+    .message.user .message-content {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .input-area {
+      border-top: 1px solid #ddd;
+      padding: 15px;
+      background: white;
+      display: flex;
+      gap: 10px;
+    }
+
+    .input-field {
+      flex: 1;
+      border: 1px solid #ddd;
+      border-radius: 25px;
+      padding: 12px 18px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    .input-field:focus {
+      border-color: #667eea;
+    }
+
+    .btn-send {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: transform 0.2s;
+    }
+
+    .btn-send:hover:not(:disabled) {
+      transform: scale(1.05);
+    }
+
+    .btn-send:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .price-display {
+      background: #e8f5e9;
+      border-left: 4px solid #4caf50;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 5px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>🚗 Reservas Luxury</h1>
+    <p>Traslados a Riviera Maya</p>
+  </div>
+
+  <div class="chat-messages" id="chatMessages"></div>
+
+  <div class="input-area">
+    <input
+      type="text"
+      class="input-field"
+      id="inputField"
+      placeholder="Escribe tu pregunta..."
+      onkeypress="handleKeyPress(event)"
+    >
+    <button class="btn-send" id="sendBtn" onclick="sendMessage()">➤</button>
+  </div>
+</div>
+
+<script>
+  const destinos = {
+    'cancun': { nombre: 'Cancún', precio_base: 40 },
+    'tulum': { nombre: 'Tulum', precio_base: 85 },
+    'playa del carmen': { nombre: 'Playa del Carmen', precio_base: 65 },
+    'puerto morelos': { nombre: 'Puerto Morelos', precio_base: 50 },
+    'cozumel': { nombre: 'Cozumel', precio_base: 100 }
+  };
+
+  let conversationData = {
+    destino: null,
+    fecha: null,
+    hora: null,
+    pasajeros: 1,
+    nombre: null,
+    telefono: null,
+    email: null,
+    paso: 'conversacion',
+    historial: []
+  };
+
+  function addMessage(text, isBot = true) {
+    const messagesDiv = document.getElementById('chatMessages');
+    const messageEl = document.createElement('div');
+    messageEl.className = \`message \${isBot ? 'bot' : 'user'}\`;
+
+    const contentEl = document.createElement('div');
+    contentEl.className = 'message-content';
+    contentEl.textContent = text;
+
+    messageEl.appendChild(contentEl);
+    messagesDiv.appendChild(messageEl);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }
+
+  function sendMessage() {
+    const input = document.getElementById('inputField');
+    const text = input.value.trim();
+
+    if (!text) return;
+
+    addMessage(text, false);
+    input.value = '';
+    input.disabled = true;
+    document.getElementById('sendBtn').disabled = true;
+
+    conversationData.historial.push({ role: 'user', content: text });
+
+    if (conversationData.paso === 'conversacion') {
+      callClaudeAPI(text);
+    } else if (conversationData.paso === 'nombre') {
+      conversationData.nombre = text;
+      addMessage(\`Gusto en conocerte, \${text}! ¿Cuál es tu teléfono?\`);
+      conversationData.paso = 'telefono';
+      input.disabled = false;
+      document.getElementById('sendBtn').disabled = false;
+      input.focus();
+    } else if (conversationData.paso === 'telefono') {
+      conversationData.telefono = text;
+      addMessage(\`¿Y tu email para la confirmación?\`);
+      conversationData.paso = 'email';
+      input.disabled = false;
+      document.getElementById('sendBtn').disabled = false;
+      input.focus();
+    } else if (conversationData.paso === 'email') {
+      conversationData.email = text;
+      finalizarReserva();
+    }
+  }
+
+  function handleKeyPress(event) {
+    if (event.key === 'Enter' && !event.target.disabled) {
+      sendMessage();
+    }
+  }
+
+  async function callClaudeAPI(userMessage) {
+    const input = document.getElementById('inputField');
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userMessage,
+          historial: conversationData.historial
+        })
+      });
+
+      if (!response.ok) throw new Error('API error');
+
+      const data = await response.json();
+      const botResponse = data.message;
+
+      addMessage(botResponse, true);
+      conversationData.historial.push({ role: 'assistant', content: botResponse });
+
+      if (botResponse.toLowerCase().includes('nombre') || botResponse.toLowerCase().includes('nombre completo')) {
+        conversationData.paso = 'nombre';
+      }
+
+    } catch (error) {
+      console.error('Error:', error);
+      addMessage('Perdón, tuve un problema. ¿Puedes repetir tu pregunta?', true);
+    } finally {
+      input.disabled = false;
+      document.getElementById('sendBtn').disabled = false;
+      input.focus();
+    }
+  }
+
+  function finalizarReserva() {
+    addMessage(\`✅ ¡Reserva enviada! Te enviaremos una confirmación a \${conversationData.email}. ¡Gracias por elegirnos! 🚗\`, true);
+
+    // Enviar datos
+    fetch('/api/reserva', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(conversationData)
+    }).catch(e => console.log('Datos capturados localmente'));
+
+    conversationData.paso = 'completo';
+    document.getElementById('inputField').disabled = true;
+    document.getElementById('sendBtn').disabled = true;
+  }
+
+  // Mensaje inicial
+  window.addEventListener('load', () => {
+    addMessage('¡Hola! 👋 Bienvenido a Reservas Luxury. ¿A cuál parte de la Riviera Maya quieres ir hoy?', true);
+  });
+</script>
+
+</body>
+</html>`;
 
 export default {
-  async fetch(request) {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+
+    if (url.pathname === '/api/chat' && request.method === 'POST') {
+      return chatHandler.onRequest({ request, env, ctx });
+    }
+
+    if (url.pathname === '/api/reserva' && request.method === 'POST') {
+      return reservaHandler.onRequest({ request, env, ctx });
+    }
+
     return new Response(HTML, {
       headers: { 'Content-Type': 'text/html; charset=utf-8' }
     });
