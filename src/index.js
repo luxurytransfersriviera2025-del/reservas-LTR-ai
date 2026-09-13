@@ -1,45 +1,9 @@
+const HTML = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Reservas Luxury</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}.container{width:100%;max-width:800px;background:white;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3);display:flex;flex-direction:column;height:90vh;max-height:800px}.header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:30px 20px;text-align:center}.header h1{font-size:28px;margin-bottom:5px}.chat-messages{flex:1;overflow-y:auto;padding:20px;background:#f9f9f9}.message{margin-bottom:15px}.message.bot{text-align:left}.message.user{text-align:right}.message-content{display:inline-block;padding:12px 18px;border-radius:15px;max-width:70%;word-wrap:break-word}.message.bot .message-content{background:#e8e8e8;color:#333}.message.user .message-content{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white}.input-area{border-top:1px solid #ddd;padding:15px;background:white;display:flex;gap:10px}.input-field{flex:1;border:1px solid #ddd;border-radius:25px;padding:12px 18px;font-size:14px;outline:none}.input-field:focus{border-color:#667eea}.btn-send{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border:none;border-radius:50%;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px}</style></head><body><div class="container"><div class="header"><h1>🚗 Reservas Luxury</h1><p>Traslados a Riviera Maya</p></div><div class="chat-messages" id="chatMessages"></div><div class="input-area"><input type="text" class="input-field" id="inputField" placeholder="Escribe tu pregunta..." onkeypress="handleKeyPress(event)"><button class="btn-send" onclick="sendMessage()">➤</button></div></div><script>function addMessage(text,isBot=true){const div=document.createElement('div');div.className='message '+(isBot?'bot':'user');const content=document.createElement('div');content.className='message-content';content.textContent=text;div.appendChild(content);document.getElementById('chatMessages').appendChild(div);document.getElementById('chatMessages').scrollTop=document.getElementById('chatMessages').scrollHeight}function sendMessage(){const input=document.getElementById('inputField');const text=input.value.trim();if(!text)return;addMessage(text,false);input.value='';addMessage('Conectando con Claude AI...',true)}function handleKeyPress(event){if(event.key==='Enter')sendMessage()}window.addEventListener('load',()=>{addMessage('¡Hola! 👋 Bienvenido a Reservas Luxury. ¿A cuál parte de la Riviera Maya quieres ir hoy?',true)})</script></body></html>`;
+
 export default {
-  async fetch(request, env) {
-    const url = new URL(request.url);
-    
-    if (url.pathname === '/api/chat' && request.method === 'POST') {
-      return handleChat(request, env);
-    }
-    
-    if (url.pathname === '/api/reserva' && request.method === 'POST') {
-      return handleReserva(request, env);
-    }
-    
-    return new Response('Chatbot activo', { status: 200 });
+  async fetch(request) {
+    return new Response(HTML, {
+      headers: { 'Content-Type': 'text/html; charset=utf-8' }
+    });
   }
 };
-
-async function handleChat(request, env) {
-  const { userMessage, historial } = await request.json();
-  const CLAUDE_API_KEY = env.CLAUDE_API_KEY;
-  
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': CLAUDE_API_KEY,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify({
-      model: 'claude-3-5-haiku-20241022',
-      max_tokens: 300,
-      messages: historial
-    })
-  });
-  
-  const data = await response.json();
-  return new Response(JSON.stringify({ message: data.content[0].text }), {
-    headers: { 'Content-Type': 'application/json' }
-  });
-}
-
-async function handleReserva(request, env) {
-  return new Response(JSON.stringify({ success: true }), {
-    headers: { 'Content-Type': 'application/json' }
-  });
-}
