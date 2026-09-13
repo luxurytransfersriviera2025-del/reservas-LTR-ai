@@ -1,6 +1,3 @@
-import chatHandler from '../functions/chat.js';
-import reservaHandler from '../functions/reserva.js';
-
 const HTML = `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -262,7 +259,7 @@ const HTML = `<!DOCTYPE html>
     const input = document.getElementById('inputField');
 
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch('/ai/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -296,8 +293,7 @@ const HTML = `<!DOCTYPE html>
   function finalizarReserva() {
     addMessage(\`✅ ¡Reserva enviada! Te enviaremos una confirmación a \${conversationData.email}. ¡Gracias por elegirnos! 🚗\`, true);
 
-    // Enviar datos
-    fetch('/api/reserva', {
+    fetch('/ai/api/reserva', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(conversationData)
@@ -308,7 +304,6 @@ const HTML = `<!DOCTYPE html>
     document.getElementById('sendBtn').disabled = true;
   }
 
-  // Mensaje inicial
   window.addEventListener('load', () => {
     addMessage('¡Hola! 👋 Bienvenido a Reservas Luxury. ¿A cuál parte de la Riviera Maya quieres ir hoy?', true);
   });
@@ -321,12 +316,98 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    if (url.pathname === '/api/chat' && request.method === 'POST') {
-      return chatHandler.onRequest({ request, env, ctx });
+    if (url.pathname === '/ai/api/chat' && request.method === 'POST') {
+      try {
+        const { userMessage, historial } = await request.json();
+
+        const messages = historial.map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }));
+
+        messages.push({
+          role: 'user',
+          content: userMessage
+        });
+
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': env.CLAUDE_API_KEY,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-3-5-haiku-20241022',
+            max_tokens: 1024,
+            system: `Eres un asistente inteligente para reservar traslados a la Riviera Maya.
+Debes ayudar al cliente a:
+1. Elegir su destino (Cancún, Tulum, Playa del Carmen, Puerto Morelos, Cozumel)
+2. Seleccionar la fecha
+3. Indicar la hora
+4. Especificar número de pasajeros
+5. Proporcionar nombre, teléfono y email para la reserva
+
+Sé amable, profesional y proporciona precios cuando sea necesario.
+Precios base por pasajero:
+- Cancún: $40
+- Tulum: $85
+- Playa del Carmen: $65
+- Puerto Morelos: $50
+- Cozumel: $100
+
+Responde siempre en español de forma concisa.`,
+            messages
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Claude API error');
+        }
+
+        const data = await response.json();
+        const botMessage = data.content[0].text;
+
+        return new Response(JSON.stringify({ message: botMessage }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error) {
+        console.error('Error:', error);
+        return new Response(JSON.stringify({ message: 'Error procesando tu solicitud' }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
     }
 
-    if (url.pathname === '/api/reserva' && request.method === 'POST') {
-      return reservaHandler.onRequest({ request, env, ctx });
+    if (url.pathname === '/ai/api/reserva' && request.method === 'POST') {
+      try {
+        const reservaData = await request.json();
+
+        if (env.RESERVAS) {
+          const key = `reserva-${Date.now()}`;
+          await env.RESERVAS.put(key, JSON.stringify(reservaData), {
+            expirationTtl: 7 * 24 * 60 * 60
+          });
+        }
+
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Reserva guardada correctamente',
+          timestamp: new Date().toISOString()
+        }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error) {
+        console.error('Error guardando reserva:', error);
+        return new Response(JSON.stringify({
+          success: false,
+          message: 'Error guardando la reserva'
+        }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
     }
 
     return new Response(HTML, {
