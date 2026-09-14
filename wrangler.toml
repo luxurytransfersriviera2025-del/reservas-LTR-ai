@@ -6,10 +6,10 @@ compatibility_date = "2024-01-15"
 [env.production]
 name = "reservas-ltr-ai-prod"
 routes = [
-  { pattern = "luxurytransfersriviera.com.mx", zone_name = "luxurytransfersriviera.com.mx" }
+  { pattern = "luxurytransfersriviera.com.mx/ai/*", zone_name = "luxurytransfersriviera.com.mx" }
 ]
 
 [[env.production.kv_namespaces]]
-binding = "KV"
+binding = "RESERVAS"
 id = "your-kv-id"
 preview_id = "your-preview-kv-id"
