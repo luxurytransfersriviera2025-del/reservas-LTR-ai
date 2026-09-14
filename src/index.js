@@ -259,7 +259,7 @@ const HTML = `<!DOCTYPE html>
     const input = document.getElementById('inputField');
 
     try {
-      const response = await fetch('/ai/api/chat', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -293,7 +293,7 @@ const HTML = `<!DOCTYPE html>
   function finalizarReserva() {
     addMessage(\`✅ ¡Reserva enviada! Te enviaremos una confirmación a \${conversationData.email}. ¡Gracias por elegirnos! 🚗\`, true);
 
-    fetch('/ai/api/reserva', {
+    fetch('/api/reserva', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(conversationData)
@@ -316,7 +316,7 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    if (url.pathname === '/ai/api/chat' && request.method === 'POST') {
+    if (url.pathname === '/api/chat' && request.method === 'POST') {
       try {
         const { userMessage, historial } = await request.json();
 
@@ -380,7 +380,7 @@ Responde siempre en español de forma concisa.`,
       }
     }
 
-    if (url.pathname === '/ai/api/reserva' && request.method === 'POST') {
+    if (url.pathname === '/api/reserva' && request.method === 'POST') {
       try {
         const reservaData = await request.json();
 
